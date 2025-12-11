@@ -2,9 +2,11 @@ package com.studentlife.scoreboard.controller;
 
 import com.studentlife.scoreboard.entity.HabitEntry;
 import com.studentlife.scoreboard.entity.Category;
+import com.studentlife.scoreboard.entity.User;
 import com.studentlife.scoreboard.service.HabitEntryService;
 import com.studentlife.scoreboard.service.FileStorageService;
 import com.studentlife.scoreboard.repository.CategoryRepository;
+import com.studentlife.scoreboard.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -12,40 +14,48 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.security.Principal;
 import java.time.LocalDate;
 import java.util.List;
 
 /**
  * Controller for habit entry CRUD operations.
  * Handles listing, creating, editing, and deleting habit entries.
- * Manages file uploads and form validation.
+ * Ensures all operations are isolated to the current authenticated user.
  */
 @Controller
 @RequestMapping("/entries")
 public class HabitEntryController {
     
-    // Service for habit entry operations
     @Autowired
     private HabitEntryService habitEntryService;
     
-    // Service for file upload handling
     @Autowired
     private FileStorageService fileStorageService;
     
-    // Repository for category operations
     @Autowired
     private CategoryRepository categoryRepository;
     
+    @Autowired
+    private UserRepository userRepository;
+    
     /**
-     * Lists all habit entries with optional filtering by category and date range.
-     * Supports pagination and filtering parameters.
+     * Lists all habit entries for the current user with optional filtering.
+     * Ensures user data isolation by filtering by current authenticated user.
      */
     @GetMapping
     public String listEntries(
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate,
+            Principal principal,
             Model model) {
+        
+        // Get current authenticated user
+        User currentUser = userRepository.findByUsername(principal.getName()).orElse(null);
+        if (currentUser == null) {
+            return "redirect:/login";
+        }
         
         Category category = null;
         LocalDate start = null;
@@ -63,7 +73,8 @@ public class HabitEntryController {
             end = LocalDate.parse(endDate);
         }
         
-        List<HabitEntry> entries = habitEntryService.filterEntries(category, start, end);
+        // Filter entries by current user only
+        List<HabitEntry> entries = habitEntryService.filterEntries(currentUser, category, start, end);
         
         model.addAttribute("entries", entries);
         model.addAttribute("categories", categoryRepository.findAll());
@@ -86,14 +97,21 @@ public class HabitEntryController {
     
     /**
      * Saves a new habit entry after validation.
-     * Handles optional file upload and defaults date to today if not provided.
+     * Sets the current user as the owner and handles optional file upload.
      */
     @PostMapping
     public String saveEntry(@ModelAttribute("habitEntry") HabitEntry habitEntry,
                            BindingResult result,
                            @RequestParam(value = "image", required = false) MultipartFile imageFile,
                            @RequestParam(value = "categoryId", required = false) Long categoryId,
+                           Principal principal,
                            Model model) {
+        
+        // Get current authenticated user
+        User currentUser = userRepository.findByUsername(principal.getName()).orElse(null);
+        if (currentUser == null) {
+            return "redirect:/login";
+        }
         
         // Set category if provided
         if (categoryId != null) {
@@ -115,6 +133,9 @@ public class HabitEntryController {
             model.addAttribute("categories", categoryRepository.findAll());
             return "habits/form";
         }
+        
+        // Set current user as owner - ensures data isolation
+        habitEntry.setUser(currentUser);
         
         // Default to today's date if not provided
         if (habitEntry.getDate() == null) {
@@ -133,11 +154,21 @@ public class HabitEntryController {
     
     /**
      * Displays the form for editing an existing habit entry.
+     * Ensures the entry belongs to the current user before allowing edit.
      */
     @GetMapping("/{id}/edit")
-    public String showEditForm(@PathVariable Long id, Model model) {
+    public String showEditForm(@PathVariable Long id, Principal principal, Model model) {
+        User currentUser = userRepository.findByUsername(principal.getName()).orElse(null);
+        if (currentUser == null) {
+            return "redirect:/login";
+        }
+        
         return habitEntryService.getEntryById(id)
                 .map(entry -> {
+                    // Safety check: ensure entry belongs to current user
+                    if (!entry.getUser().getId().equals(currentUser.getId())) {
+                        return "redirect:/entries";
+                    }
                     model.addAttribute("habitEntry", entry);
                     model.addAttribute("categories", categoryRepository.findAll());
                     return "habits/form";
@@ -147,7 +178,7 @@ public class HabitEntryController {
     
     /**
      * Updates an existing habit entry after validation.
-     * Preserves the existing image if no new image is uploaded.
+     * Ensures the entry belongs to the current user before allowing update.
      */
     @PostMapping("/{id}")
     public String updateEntry(@PathVariable Long id,
@@ -155,7 +186,13 @@ public class HabitEntryController {
                              BindingResult result,
                              @RequestParam(value = "image", required = false) MultipartFile imageFile,
                              @RequestParam(value = "categoryId", required = false) Long categoryId,
+                             Principal principal,
                              Model model) {
+        
+        User currentUser = userRepository.findByUsername(principal.getName()).orElse(null);
+        if (currentUser == null) {
+            return "redirect:/login";
+        }
         
         // Set category if provided
         if (categoryId != null) {
@@ -178,15 +215,23 @@ public class HabitEntryController {
             return "habits/form";
         }
         
-        // Preserve existing image if no new image is uploaded
+        // Preserve existing image and user if no new image is uploaded
         HabitEntry existingEntry = habitEntryService.getEntryById(id).orElse(null);
         if (existingEntry != null) {
+            // Safety check: ensure entry belongs to current user
+            if (!existingEntry.getUser().getId().equals(currentUser.getId())) {
+                return "redirect:/entries";
+            }
+            
             if (imageFile != null && !imageFile.isEmpty()) {
                 String filename = fileStorageService.store(imageFile);
                 habitEntry.setImageFilename(filename);
             } else {
                 habitEntry.setImageFilename(existingEntry.getImageFilename());
             }
+            
+            // Preserve user ownership
+            habitEntry.setUser(existingEntry.getUser());
         }
         
         habitEntryService.saveEntry(habitEntry);
@@ -195,10 +240,22 @@ public class HabitEntryController {
     
     /**
      * Deletes a habit entry by ID.
+     * Ensures the entry belongs to the current user before allowing deletion.
      */
     @PostMapping("/{id}/delete")
-    public String deleteEntry(@PathVariable Long id) {
-        habitEntryService.deleteEntry(id);
+    public String deleteEntry(@PathVariable Long id, Principal principal) {
+        User currentUser = userRepository.findByUsername(principal.getName()).orElse(null);
+        if (currentUser == null) {
+            return "redirect:/login";
+        }
+        
+        // Safety check: ensure entry belongs to current user before deleting
+        habitEntryService.getEntryById(id).ifPresent(entry -> {
+            if (entry.getUser().getId().equals(currentUser.getId())) {
+                habitEntryService.deleteEntry(id);
+            }
+        });
+        
         return "redirect:/entries";
     }
     

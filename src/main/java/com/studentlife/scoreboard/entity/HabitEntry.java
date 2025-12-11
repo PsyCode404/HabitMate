@@ -20,6 +20,12 @@ public class HabitEntry {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
+    // User who owns this entry - ensures data isolation
+    @NotNull(message = "User is required")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+    
     // Habit category (STUDY, EXERCISE, NAP, etc.)
     @NotNull(message = "Category is required")
     @ManyToOne(fetch = FetchType.EAGER)
@@ -74,6 +80,14 @@ public class HabitEntry {
     
     public void setId(Long id) {
         this.id = id;
+    }
+    
+    public User getUser() {
+        return user;
+    }
+    
+    public void setUser(User user) {
+        this.user = user;
     }
     
     public Category getCategory() {
