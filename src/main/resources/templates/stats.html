@@ -69,10 +69,7 @@
         const ctx = document.getElementById('statsChart').getContext('2d');
         
         const statsData = /*[[${weeklyStats}]]*/ {};
-        const labels = Object.keys(statsData).map(key => {
-            const categoryObj = statsData[key];
-            return categoryObj.displayName || categoryObj.name || key;
-        });
+        const labels = Object.keys(statsData);
         const data = Object.values(statsData);
         
         const colors = [

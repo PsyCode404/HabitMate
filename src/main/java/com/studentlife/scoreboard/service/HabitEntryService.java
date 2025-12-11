@@ -206,24 +206,25 @@ public class HabitEntryService {
     
     /**
      * Generates weekly statistics: total duration per category for the past 7 days.
-     * Returns a map of categories to their total duration.
+     * Returns a map of category names to their total duration.
      */
-    public Map<Category, Integer> getWeeklyStats() {
+    public Map<String, Integer> getWeeklyStats() {
         LocalDate today = LocalDate.now();
         LocalDate weekStart = today.minus(7, ChronoUnit.DAYS);
         List<HabitEntry> weekEntries = getEntriesByDateRange(weekStart, today);
         
         // Initialize map with all categories
-        Map<Category, Integer> stats = new LinkedHashMap<>();
+        Map<String, Integer> stats = new LinkedHashMap<>();
         for (Category category : categoryRepository.findAll()) {
-            stats.put(category, 0);
+            stats.put(category.getDisplayName() != null ? category.getDisplayName() : category.getName(), 0);
         }
         
         // Accumulate duration by category
         for (HabitEntry entry : weekEntries) {
             Category category = entry.getCategory();
             if (category != null) {
-                stats.put(category, stats.get(category) + (entry.getDuration() != null ? entry.getDuration() : 0));
+                String categoryName = category.getDisplayName() != null ? category.getDisplayName() : category.getName();
+                stats.put(categoryName, stats.get(categoryName) + (entry.getDuration() != null ? entry.getDuration() : 0));
             }
         }
         
