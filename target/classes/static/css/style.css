@@ -50,6 +50,53 @@ main {
     color: #667eea !important;
 }
 
+/* Authentication Pages Styling */
+.auth-card {
+    border: none;
+    border-radius: 1rem;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.auth-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--hover-shadow);
+}
+
+.auth-card .card-title {
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+}
+
+.auth-card .form-control {
+    border-radius: 0.5rem;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+}
+
+.auth-card .form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.auth-card .btn-primary {
+    border-radius: 0.5rem;
+    font-weight: 600;
+    padding: 0.75rem;
+    background: var(--primary-gradient);
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.auth-card .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--medium-shadow);
+}
+
 .navbar-nav .nav-link.active {
     background: var(--primary-gradient);
     color: white !important;
