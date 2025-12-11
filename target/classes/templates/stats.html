@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistics - Student Life Scoreboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="bg-light">
+<nav class="navbar navbar-expand-lg navbar-white bg-white shadow-sm mb-4">
+    <div class="container">
+        <a class="navbar-brand fw-bold text-primary d-flex align-items-center" href="/">
+            <img src="/img/lifestyle_18706055.png" alt="LifeScore" style="height: 45px; margin-right: 0.5rem;">
+            <span style="font-size: 1.3rem; font-weight: 600;">LifeScore</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto gap-2">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/dashboard}">
+                        <i class="bi bi-speedometer2 me-1"></i>Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" th:href="@{/stats}">
+                        <i class="bi bi-bar-chart me-1"></i>Stats
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/entries}">
+                        <i class="bi bi-list-check me-1"></i>Entries
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<main class="container mb-5">
+    <div class="row mb-5">
+        <div class="col-12">
+            <h1 class="h3">
+                <i class="bi bi-bar-chart me-2"></i>Statistics
+            </h1>
+            <small class="text-muted">Weekly habit distribution</small>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <div class="card">
+                <div class="card-body p-4">
+                    <div style="position: relative; height: 400px;">
+                        <canvas id="statsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <script th:inline="javascript">
+        const ctx = document.getElementById('statsChart').getContext('2d');
+        
+        const statsData = /*[[${weeklyStats}]]*/ {};
+        const labels = Object.keys(statsData).map(key => {
+            const categoryObj = statsData[key];
+            return categoryObj.displayName || categoryObj.name || key;
+        });
+        const data = Object.values(statsData);
+        
+        const colors = [
+            '#667eea', '#764ba2', '#f093fb', '#4facfe',
+            '#43e97b', '#fa709a', '#fee140', '#30cfd0'
+        ];
+        
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Minutes Tracked',
+                    data: data,
+                    backgroundColor: colors.slice(0, labels.length),
+                    borderColor: colors.slice(0, labels.length),
+                    borderWidth: 0,
+                    borderRadius: 6,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0,0,0,0.05)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#999'
+                        }
+                    },
+                    y: {
+                        grid: {
+                            display: false,
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#666',
+                            font: {
+                                weight: '500'
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</main>
+
+<footer class="bg-white border-top mt-5 py-4">
+    <div class="container text-center">
+        <small class="text-muted">Made with Spring Boot & Thymeleaf — 2025</small>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
