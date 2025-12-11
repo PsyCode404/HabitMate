@@ -10,26 +10,42 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * Repository for HabitEntry entity.
+ * Provides database access and custom query methods for habit entries.
+ * Handles filtering, searching, and aggregation operations.
+ */
 @Repository
 public interface HabitEntryRepository extends JpaRepository<HabitEntry, Long> {
     
+    // Find all entries for a specific date, ordered by most recent first
     List<HabitEntry> findByDateOrderByDateDesc(LocalDate date);
     
+    // Find entries within a date range, ordered by most recent first
     List<HabitEntry> findByDateBetweenOrderByDateDesc(LocalDate startDate, LocalDate endDate);
     
+    // Find all entries of a specific habit type, ordered by most recent first
     List<HabitEntry> findByHabitTypeOrderByDateDesc(HabitType habitType);
     
+    // Find entries for a specific date, ordered by habit type and description
     @Query("SELECT h FROM HabitEntry h WHERE h.date = :date ORDER BY h.habitType, h.description")
     List<HabitEntry> findByDateOrderByHabitType(@Param("date") LocalDate date);
     
+    // Count total entries for a specific date
     @Query("SELECT COUNT(h) FROM HabitEntry h WHERE h.date = :date")
     Long countByDate(@Param("date") LocalDate date);
     
+    // Calculate average score for entries on a specific date
     @Query("SELECT AVG(h.score) FROM HabitEntry h WHERE h.date = :date AND h.score IS NOT NULL")
     Double getAverageScoreByDate(@Param("date") LocalDate date);
     
+    // Find entries by habit type within a date range, ordered by most recent first
     @Query("SELECT h FROM HabitEntry h WHERE h.habitType = :habitType AND h.date BETWEEN :startDate AND :endDate ORDER BY h.date DESC")
     List<HabitEntry> findByTypeAndDateRange(@Param("habitType") HabitType habitType, 
                                              @Param("startDate") LocalDate startDate, 
                                              @Param("endDate") LocalDate endDate);
+    
+    // Find all entries ordered by most recent first
+    @Query("SELECT h FROM HabitEntry h ORDER BY h.date DESC")
+    List<HabitEntry> findAllOrderByDateDesc();
 }

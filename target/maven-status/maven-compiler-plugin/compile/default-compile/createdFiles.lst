@@ -6,5 +6,4 @@ com\studentlife\scoreboard\service\FileStorageService.class
 com\studentlife\scoreboard\entity\HabitType.class
 com\studentlife\scoreboard\ScoreboardApplication.class
 com\studentlife\scoreboard\controller\HabitEntryController.class
-com\studentlife\scoreboard\config\DataMigration.class
 com\studentlife\scoreboard\entity\HabitEntry.class

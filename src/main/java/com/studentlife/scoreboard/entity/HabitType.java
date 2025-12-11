@@ -1,5 +1,9 @@
 package com.studentlife.scoreboard.entity;
 
+/**
+ * Enum representing the different categories of habits that users can track.
+ * Each type has a display name for UI presentation.
+ */
 public enum HabitType {
     STUDY("Study"),
     EXERCISE("Exercise"),

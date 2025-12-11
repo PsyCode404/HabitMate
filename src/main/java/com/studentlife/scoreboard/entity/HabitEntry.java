@@ -6,44 +6,60 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 
+/**
+ * Represents a single habit entry recorded by a user.
+ * Maps to the habit_entries table in the database.
+ * Contains core habit tracking data: type, duration, date, score, and optional metadata.
+ */
 @Entity
 @Table(name = "habit_entries")
 public class HabitEntry {
     
+    // Primary key
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
+    // Habit category (STUDY, EXERCISE, NAP, etc.)
     @NotNull(message = "Habit type is required")
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private HabitType habitType;
     
+    // User-provided description of the habit activity
     @NotBlank(message = "Description is required")
     @Column(nullable = false)
     private String description;
     
+    // Date when the habit was performed
     @NotNull(message = "Date is required")
     @Column(nullable = false)
     private LocalDate date;
     
+    // Duration in minutes (required, minimum 1)
     @NotNull(message = "Duration is required")
     @Min(value = 1, message = "Duration must be at least 1 minute")
     @Column(nullable = false)
-    private Integer duration; // in minutes
+    private Integer duration;
     
-    private Integer score; // 1-10 rating
+    // Optional score rating (1-10)
+    private Integer score;
     
+    // Optional additional notes about the habit
     private String notes;
     
+    // Filename of uploaded image (if any)
     @Column(length = 255)
     private String imageFilename;
     
+    // Optional custom label for the habit
     @Column(length = 100)
     private String customLabel;
     
+    // Default constructor for JPA
     public HabitEntry() {}
     
+    // Constructor with required fields
     public HabitEntry(HabitType habitType, String description, LocalDate date, Integer duration) {
         this.habitType = habitType;
         this.description = description;

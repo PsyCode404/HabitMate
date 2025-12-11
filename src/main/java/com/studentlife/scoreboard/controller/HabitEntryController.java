@@ -15,16 +15,27 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * Controller for habit entry CRUD operations.
+ * Handles listing, creating, editing, and deleting habit entries.
+ * Manages file uploads and form validation.
+ */
 @Controller
 @RequestMapping("/entries")
 public class HabitEntryController {
     
+    // Service for habit entry operations
     @Autowired
     private HabitEntryService habitEntryService;
     
+    // Service for file upload handling
     @Autowired
     private FileStorageService fileStorageService;
     
+    /**
+     * Lists all habit entries with optional filtering by type and date range.
+     * Supports pagination and filtering parameters.
+     */
     @GetMapping
     public String listEntries(
             @RequestParam(required = false) String type,
@@ -63,6 +74,9 @@ public class HabitEntryController {
         return "habits/list";
     }
     
+    /**
+     * Displays the form for creating a new habit entry.
+     */
     @GetMapping("/new")
     public String showCreateForm(Model model) {
         model.addAttribute("habitEntry", new HabitEntry());
@@ -70,6 +84,10 @@ public class HabitEntryController {
         return "habits/form";
     }
     
+    /**
+     * Saves a new habit entry after validation.
+     * Handles optional file upload and defaults date to today if not provided.
+     */
     @PostMapping
     public String saveEntry(@Valid @ModelAttribute("habitEntry") HabitEntry habitEntry,
                            BindingResult result,
@@ -80,11 +98,12 @@ public class HabitEntryController {
             return "habits/form";
         }
         
+        // Default to today's date if not provided
         if (habitEntry.getDate() == null) {
             habitEntry.setDate(LocalDate.now());
         }
         
-        // Handle image upload
+        // Handle optional image upload
         if (imageFile != null && !imageFile.isEmpty()) {
             String filename = fileStorageService.store(imageFile);
             habitEntry.setImageFilename(filename);
@@ -94,6 +113,9 @@ public class HabitEntryController {
         return "redirect:/entries";
     }
     
+    /**
+     * Displays the form for editing an existing habit entry.
+     */
     @GetMapping("/{id}/edit")
     public String showEditForm(@PathVariable Long id, Model model) {
         return habitEntryService.getEntryById(id)
@@ -105,6 +127,10 @@ public class HabitEntryController {
                 .orElse("redirect:/entries");
     }
     
+    /**
+     * Updates an existing habit entry after validation.
+     * Preserves the existing image if no new image is uploaded.
+     */
     @PostMapping("/{id}")
     public String updateEntry(@PathVariable Long id,
                              @Valid @ModelAttribute("habitEntry") HabitEntry habitEntry,
@@ -116,7 +142,7 @@ public class HabitEntryController {
             return "habits/form";
         }
         
-        // Load existing entry to preserve image if no new image is uploaded
+        // Preserve existing image if no new image is uploaded
         HabitEntry existingEntry = habitEntryService.getEntryById(id).orElse(null);
         if (existingEntry != null) {
             if (imageFile != null && !imageFile.isEmpty()) {
@@ -131,12 +157,18 @@ public class HabitEntryController {
         return "redirect:/entries";
     }
     
+    /**
+     * Deletes a habit entry by ID.
+     */
     @PostMapping("/{id}/delete")
     public String deleteEntry(@PathVariable Long id) {
         habitEntryService.deleteEntry(id);
         return "redirect:/entries";
     }
     
+    /**
+     * Adds common attributes to all views (habit types dropdown).
+     */
     @ModelAttribute
     public void addCommonAttributes(Model model) {
         model.addAttribute("habitTypes", HabitType.values());
